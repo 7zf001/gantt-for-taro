@@ -1,27 +1,20 @@
 import Taro, { Component } from '@tarojs/taro'
+import PropTypes from 'prop-types'
 import { View, ScrollView } from '@tarojs/components'
 import moment from 'dayjs'
+import classNames from 'classnames'
 import Header from './header'
 import './index.less'
 
 const TODAY = moment().format('YYYY-MM-DD')
 
 class Gantt extends Component {
-  static defaultProps = {
-    selected: TODAY,
-    // 显示当月前后多少个月
-    monthLength: 2
-  }
   constructor(props) {
     super(props)
     this.todayId = `date-${TODAY}`
     this.systemInfo = null
     this.env = Taro.getEnv()
-    Taro.getSystemInfo()
-      .then(res => {
-        this.systemInfo = res
-      })
-
+    this.systemInfo = Taro.getSystemInfoSync()
     this.state = {
       daysInfo: [],
       scrollLeft: 0,
@@ -40,10 +33,10 @@ class Gantt extends Component {
   componentDidMount() {
     if (this.env === Taro.ENV_TYPE.WEB) {
       setTimeout(() => {
-        this.setViewPropertyWeb(`#${this.todayId}`)
+        this.setViewPropertyWeb(`${this.todayId}`)
       })
     } else if (this.env === Taro.ENV_TYPE.WEAPP) {
-      this.setViewPropertyWeapp(`#${this.todayId}`)
+      this.setViewPropertyWeapp(`${this.todayId}`)
     }
   }
    /**
@@ -51,15 +44,28 @@ class Gantt extends Component {
    * @param {String} id: #date-2018-11-20
    * @param {String} selectDay: 2018-11-20
    */
-  setViewPropertyWeb(id) {
-    let todayElement = document.getElementById(id)
+  setViewPropertyWeb(id, selectDay) {
     let { daysInfo } = this.state
     let lastId = daysInfo[daysInfo.length - 1]['id']
+    let todayElement = document.getElementById(id)
     let lastElement = document.getElementById(`${lastId}`)
-    this.setState({
-      scrollLeft: todayElement.offsetLeft - this.systemInfo.windowWidth / 2 + todayElement.offsetWidth / 2,
-      processWidth: lastElement.offsetLeft + lastElement.offsetWidth
-    })
+    let setSelectedObject = {}
+    
+    if (selectDay) {  
+      setSelectedObject = {
+        selected: selectDay,
+        selectedMonth: moment(selectDay).format('MM'),
+        selectedYear: moment(selectDay).format('YYYY')
+      }
+    }
+    let scrollLeft = todayElement.offsetLeft - this.systemInfo.windowWidth / 2 + todayElement.offsetWidth / 2
+    let processWidth = lastElement.offsetLeft + lastElement.offsetWidth
+
+    this.setState(prevState => ({
+        scrollLeft: prevState.scrollLeft === scrollLeft ? scrollLeft + 0.1 : scrollLeft,
+        processWidth,
+        ...setSelectedObject
+    }))
   }
   /**
    * weapp: 设置当天日期的位置和任务宽度
@@ -70,7 +76,7 @@ class Gantt extends Component {
     const query = Taro.createSelectorQuery().in(this.$scope)
     let { daysInfo } = this.state
     let lastId = daysInfo[daysInfo.length - 1]['id']
-    query.select(id).boundingClientRect()
+    query.select(`#${id}`).boundingClientRect()
     query.select(`#${lastId}`).boundingClientRect()
     query.select('#container').scrollOffset()
     query.exec(res => {
@@ -131,10 +137,10 @@ class Gantt extends Component {
   selectDay(item) {
     if (this.env === Taro.ENV_TYPE.WEB) {
       setTimeout(() => {
-        this.setViewPropertyWeb(`#${item.id}`)
+        this.setViewPropertyWeb(`${item.id}`, item.fullDate)
       })
     } else if (this.env === Taro.ENV_TYPE.WEAPP) {
-      this.setViewPropertyWeapp(`#${item.id}`, item.fullDate)
+      this.setViewPropertyWeapp(`${item.id}`, item.fullDate)
     }
   }
   /**
@@ -150,10 +156,12 @@ class Gantt extends Component {
     console.log('render')
     let { daysInfo, scrollLeft, processWidth, selectedMonth, selectedYear } = this.state
     let daysTemplate = daysInfo.map(item => {
-      let className = 'gantt-day'
-      if (this.state.selected === item.fullDate) {
-        className += ' selected'
-      }
+      let className = classNames(
+        'gantt__day', 
+        {
+          'gantt__day_selected': this.state.selected === item.fullDate
+        }
+      )
       return (
         <View 
           id={item.id}
@@ -172,11 +180,11 @@ class Gantt extends Component {
           scrollX
           scrollWithAnimation
           id='container'
-          className='container'
+          className='gantt__container'
           scrollLeft={scrollLeft}
         >
           <View 
-            className='gantt-days'
+            className='gantt__days-container'
             style={{width: `${processWidth}px`}}
           >
             { daysTemplate }
@@ -184,7 +192,7 @@ class Gantt extends Component {
           {
             processWidth && (
               <View 
-                className='process-container' 
+                className='gantt__process-container' 
                 style={{width: `${processWidth}px`}}
               >
                 123
@@ -195,6 +203,26 @@ class Gantt extends Component {
       </View>
     )
   }
+}
+
+Gantt.defaultProps = {
+  selected: TODAY,
+  // 显示当月前后多少个月
+  monthLength: 2
+}
+
+Gantt.propTypes = {
+  selected: PropTypes.string,
+  monthLength: PropTypes.number,
+  tasks: PropTypes.arrayOf(PropTypes.shape({
+    name: PropTypes.string,
+    step: PropTypes.arrayOf(PropTypes.shape({
+      color: PropTypes.string,
+      styleType: PropTypes.string,
+      startDate: PropTypes.string,
+      endDate: PropTypes.string
+    }))
+  }))
 }
 
 export default Gantt

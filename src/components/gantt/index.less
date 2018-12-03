@@ -1,14 +1,15 @@
-.container {
-  width: 100%;
-}
-
-.gantt-days {
-  width: auto;
-  font-family: PingFangSC-Regular;
-  font-size: 24px;
-  color: rgba(153,153,153,1);
-  display: flex;
-  .gantt-day {
+.gantt {
+  &__container {
+    width: 100%;
+  }
+  &__days-container {
+    width: auto;
+    font-family: PingFangSC-Regular;
+    font-size: 24px;
+    color: rgba(153,153,153,1);
+    display: flex;
+  }
+  &__day {
     display: inline-block;
     box-sizing: border-box;
     text-align: center;
@@ -18,17 +19,16 @@
     border-radius: 100%;
     height: 60px;
     flex: 1 0 60px;
+    &_selected {
+      color: white;
+      background: #E84358;
+      box-shadow: 0px 8px 18px 0px rgba(232,67,88,0.41);
+    }
   }
-  .selected {
-    color: white;
-    background: #E84358;
-    box-shadow: 0px 8px 18px 0px rgba(232,67,88,0.41);
+  &__process-container {
+    margin-top: 20px;
+    width: 100%;
+    height: 100px;
+    background: #dcdcdc;
   }
-}
-
-.process-container {
-  margin-top: 20px;
-  width: 100%;
-  height: 100px;
-  background: #DCDCDC;
 }

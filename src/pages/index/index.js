@@ -9,6 +9,22 @@ export default class Index extends Component {
     navigationBarTitleText: '首页'
   }
 
+  state = {
+    tasks: [
+      {
+        name: 'A0000010',
+        step: [
+          {
+            color: 1,
+            styleType: 'circle', // rect || circle || dotted
+            startDate: '2018-11-20',
+            endDate: '2018-11-22',
+          }
+        ]
+      }
+    ],
+  }
+
   componentWillMount () { }
 
   componentDidMount () { }
@@ -22,7 +38,7 @@ export default class Index extends Component {
   render () {
     return (
       <View className='index'>
-        <Gantt />
+        <Gantt monthLength={2} tasks={this.state.tasks} />
       </View>
     )
   }
