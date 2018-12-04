@@ -14,10 +14,9 @@ class Tasks extends Component {
     })
   }
   render() {
-    console.log('props',this.props)
     let { selectedTaskId } = this.state
-    let { isProcessedTaskData, tasks, dateViewOffsetMap } = this.props
-    let tasksTemplate = isProcessedTaskData && tasks.map( item => {
+    let { tasks, dateViewOffsetMap } = this.props
+    let tasksTemplate = tasks.map( item => {
       let steps = item.steps || []
       let template = steps.map( step => {
         let { id, color, backgroundColor, startDate, endDate, text, styleType } = step
@@ -25,7 +24,6 @@ class Tasks extends Component {
           start: dateViewOffsetMap[`date-${startDate}`],
           end: dateViewOffsetMap[`date-${endDate}`]
         }
-        console.log('step', step, offset)
         let width = offset['end']['right'] - offset['start']['left'] + 'px'
         let style = {
           width,
@@ -70,13 +68,11 @@ class Tasks extends Component {
 }
 
 Tasks.defaultProps = {
-  isProcessedTaskData: false,
-  dateViewOffsetMap: new Map(),
+  dateViewOffsetMap: {},
   tasks: []
 }
 
 Tasks.propTypes = {
-  isProcessedTaskData: PropTypes.bool,
   dateViewOffsetMap: PropTypes.object,
   tasks: PropTypes.array
 }

@@ -15,8 +15,6 @@ class Gantt extends Component {
     super(props)
     this.todayId = `date-${TODAY}`
     this.systemInfo = null
-    // 所有日期的偏移量,减少重复获取元素次数
-    this.dateViewOffsetMap = new Map()
     this.env = Taro.getEnv()
     this.systemInfo = Taro.getSystemInfoSync()
     let daysInfo = this.getDaysOfCenter(this.props.monthLength)
@@ -36,7 +34,8 @@ class Gantt extends Component {
   componentDidMount() {
     if (this.env === Taro.ENV_TYPE.WEB) {
       setTimeout(() => {
-        this.setViewPropertyWeb(`${this.todayId}`)
+        this.setViewPropertyWeapp(`${this.todayId}`)
+        this.setTasksDataWeapp(this.props.tasks)
       })
     } else if (this.env === Taro.ENV_TYPE.WEAPP) {
       this.setViewPropertyWeapp(`${this.todayId}`)
@@ -44,7 +43,7 @@ class Gantt extends Component {
     }
   }
   /**
-   * 获取任务列表的数据，使其渲染任务视图
+   * weapp: 获取任务列表的数据，使其渲染任务视图
    */
   setTasksDataWeapp(tasks) {
     // weapp
@@ -81,35 +80,6 @@ class Gantt extends Component {
         isProcessedTaskData: true
       })
     })
-  }
-  /**
-   * web: 设置当天日期的位置和任务宽度
-   * @param {String} id: #date-2018-11-20
-   * @param {String} selectDay: 2018-11-20
-   */
-  setViewPropertyWeb(id, selectDay) {
-    let { daysInfo } = this.state
-    let lastId = daysInfo[daysInfo.length - 1]['id']
-    let todayElement = document.getElementById(id)
-    let lastElement = document.getElementById(`${lastId}`)
-    let setSelectedObject = {}
-    
-    if (selectDay) {  
-      setSelectedObject = {
-        selected: selectDay,
-        selectedMonth: moment(selectDay).format('MM'),
-        selectedYear: moment(selectDay).format('YYYY')
-      }
-    }
-
-    let scrollLeft = todayElement.offsetLeft - this.systemInfo.windowWidth / 2 + todayElement.offsetWidth / 2
-    let taskContarinerWidth = lastElement.offsetLeft + lastElement.offsetWidth
-
-    this.setState(prevState => ({
-        scrollLeft: prevState.scrollLeft === scrollLeft ? scrollLeft + 0.1 : scrollLeft,
-        taskContarinerWidth,
-        ...setSelectedObject
-    }))
   }
   /**
    * weapp: 设置当天日期的位置和任务宽度
@@ -181,7 +151,7 @@ class Gantt extends Component {
   selectDay(item) {
     if (this.env === Taro.ENV_TYPE.WEB) {
       setTimeout(() => {
-        this.setViewPropertyWeb(`${item.id}`, item.fullDate)
+        this.setViewPropertyWeapp(`${item.id}`, item.fullDate)
       })
     } else if (this.env === Taro.ENV_TYPE.WEAPP) {
       this.setViewPropertyWeapp(`${item.id}`, item.fullDate)
@@ -199,7 +169,6 @@ class Gantt extends Component {
   render () {
     let { tasks } = this.props
     let { daysInfo, scrollLeft, taskContarinerWidth, selectedMonth, selectedYear, isProcessedTaskData, dateViewOffsetMap } = this.state
-    console.log(dateViewOffsetMap)
     let daysTemplate = daysInfo.map(item => {
       let className = classNames(
         'gantt__day', 
@@ -209,12 +178,11 @@ class Gantt extends Component {
       )
       return (
         <View 
-          id={item.id}
-          className={className}
+          className='gantt__day-wrap'
           key={item.id}
           onClick={this.selectDay.bind(this, item)}
         >
-          {item.day}
+          <View id={item.id} className={className}>{item.day}</View>
         </View>
       )
     })
@@ -231,7 +199,6 @@ class Gantt extends Component {
         >
           <View 
             className='gantt__days-container'
-            style={{width: `${taskContarinerWidth}px`}}
           >
             { daysTemplate }
           </View>
@@ -241,7 +208,7 @@ class Gantt extends Component {
                 className='gantt__tasks-container' 
                 style={{width: `${taskContarinerWidth}px`}}
               >
-                <Tasks isProcessedTaskData={isProcessedTaskData} dateViewOffsetMap={dateViewOffsetMap} tasks={tasks} />
+                { isProcessedTaskData && <Tasks dateViewOffsetMap={dateViewOffsetMap} tasks={tasks} />}
               </View>
             )
           }
