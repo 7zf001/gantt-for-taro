@@ -12,16 +12,44 @@ export default class Index extends Component {
   state = {
     tasks: [
       {
+        id: '123123',
         name: 'A0000010',
-        step: [
+        steps: [
           {
-            color: 1,
+            id: '12321',
+            text: '任务开始',
+            color: 'white',
+            backgroundColor: '#1825a1',
             styleType: 'circle', // rect || circle || dotted
-            startDate: '2018-11-20',
-            endDate: '2018-11-22',
+            startDate: '2018-12-04',
+            endDate: '2018-12-07',
+          },
+          {
+            id: '12322',
+            text: '第二步',
+            color: 'black',
+            backgroundColor: 'yellow',
+            styleType: 'circle', // rect || circle || dotted
+            startDate: '2018-12-08',
+            endDate: '2018-12-12',
           }
         ]
-      }
+      },
+      {
+        id: '123124',
+        name: 'V00010',
+        steps: [
+          {
+            id: '123211',
+            text: '开发开始',
+            color: 'white',
+            backgroundColor: 'red',
+            styleType: 'circle', // rect || circle || dotted
+            startDate: '2018-12-05',
+            endDate: '2018-12-09',
+          }
+        ]
+      },
     ],
   }
 
@@ -38,7 +66,7 @@ export default class Index extends Component {
   render () {
     return (
       <View className='index'>
-        <Gantt monthLength={2} tasks={this.state.tasks} />
+        <Gantt tasks={this.state.tasks} />
       </View>
     )
   }

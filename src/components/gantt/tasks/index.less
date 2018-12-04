@@ -1,0 +1,27 @@
+.gantt {
+  &__task-wrap {
+    opacity: 0.5;
+    position: relative;
+    height: 60px;
+    border: 1px #cccccc dotted;
+    border-bottom: none;
+    &:last-child {
+      border-bottom: 1px #cccccc dotted;
+    }
+    &_clicked {
+      opacity: 1;
+    }
+  }
+  &__task-item {
+    font-family: PingFangSC-Regular;
+    text-align: center;
+    font-size: 18px;
+    line-height: 26px;
+    height: 26px;
+    top: 50%;
+    transform: translateY(-50%);
+    &_circle {
+      border-radius: 26px;
+    }
+  }
+}

@@ -1,10 +1,12 @@
-import Taro, { Component } from '@tarojs/taro'
-import PropTypes from 'prop-types'
-import { View, ScrollView } from '@tarojs/components'
 import moment from 'dayjs'
+import PropTypes from 'prop-types'
 import classNames from 'classnames'
-import Header from './header'
+import Taro, { Component } from '@tarojs/taro'
+import { View, ScrollView } from '@tarojs/components'
+
 import './index.less'
+import Tasks from './tasks'
+import Header from './header'
 
 const TODAY = moment().format('YYYY-MM-DD')
 
@@ -13,22 +15,23 @@ class Gantt extends Component {
     super(props)
     this.todayId = `date-${TODAY}`
     this.systemInfo = null
+    // 所有日期的偏移量,减少重复获取元素次数
+    this.dateViewOffsetMap = new Map()
     this.env = Taro.getEnv()
     this.systemInfo = Taro.getSystemInfoSync()
+    let daysInfo = this.getDaysOfCenter(this.props.monthLength)
     this.state = {
-      daysInfo: [],
+      // 所有日期的偏移量,减少重复获取元素次数
+      dateViewOffsetMap: {},
+      // 处理task数据后才渲染
+      isProcessedTaskData: false,
+      daysInfo,
       scrollLeft: 0,
-      processWidth: 0,
       selected: TODAY,
+      taskContarinerWidth: 0,
       selectedMonth: moment().format('MM'),
       selectedYear: moment().format('YYYY')
     }
-  }
-  componentWillMount() {
-    let daysInfo = this.getDaysOfCenter(this.props.monthLength)
-    this.setState({
-      daysInfo
-    })
   }
   componentDidMount() {
     if (this.env === Taro.ENV_TYPE.WEB) {
@@ -37,9 +40,49 @@ class Gantt extends Component {
       })
     } else if (this.env === Taro.ENV_TYPE.WEAPP) {
       this.setViewPropertyWeapp(`${this.todayId}`)
+      this.setTasksDataWeapp(this.props.tasks)
     }
   }
-   /**
+  /**
+   * 获取任务列表的数据，使其渲染任务视图
+   */
+  setTasksDataWeapp(tasks) {
+    // weapp
+    // 所有日期
+    let allStepDate = []
+    let dateViewOffsetMap = {}
+    tasks.forEach(item => {
+      let steps = item.steps || []
+      steps.forEach(step => {
+        let { endDate, startDate } = step
+        if (allStepDate.indexOf(endDate) === -1) {
+          allStepDate.push(endDate)
+        }
+        if (allStepDate.indexOf(startDate) === -1) {
+          allStepDate.push(startDate)
+        }
+      })
+    })
+    const query = Taro.createSelectorQuery().in(this.$scope)
+    allStepDate.forEach(value => {
+      query.select(`#date-${value}`).boundingClientRect()
+    })
+    query.exec(res => {
+      res.forEach(item => {
+        let { id: key, left, right } = item
+        let offset = {
+          left,
+          right
+        }
+        dateViewOffsetMap[key] = offset
+      })
+      this.setState({
+        dateViewOffsetMap,
+        isProcessedTaskData: true
+      })
+    })
+  }
+  /**
    * web: 设置当天日期的位置和任务宽度
    * @param {String} id: #date-2018-11-20
    * @param {String} selectDay: 2018-11-20
@@ -58,12 +101,13 @@ class Gantt extends Component {
         selectedYear: moment(selectDay).format('YYYY')
       }
     }
+
     let scrollLeft = todayElement.offsetLeft - this.systemInfo.windowWidth / 2 + todayElement.offsetWidth / 2
-    let processWidth = lastElement.offsetLeft + lastElement.offsetWidth
+    let taskContarinerWidth = lastElement.offsetLeft + lastElement.offsetWidth
 
     this.setState(prevState => ({
         scrollLeft: prevState.scrollLeft === scrollLeft ? scrollLeft + 0.1 : scrollLeft,
-        processWidth,
+        taskContarinerWidth,
         ...setSelectedObject
     }))
   }
@@ -85,8 +129,9 @@ class Gantt extends Component {
       let scrollView = res[2]
       // 设置left，使屏幕水平中心显示当天
       let scrollLeft = todayRect.left + scrollView.scrollLeft - this.systemInfo.windowWidth / 2 + todayRect.width / 2
-      let processWidth = lastRect.right + scrollView.scrollLeft
+      let taskContarinerWidth = lastRect.right + scrollView.scrollLeft
       let setSelectedObject = {}
+
       if (selectDay) {  
         setSelectedObject = {
           selected: selectDay,
@@ -94,20 +139,19 @@ class Gantt extends Component {
           selectedYear: moment(selectDay).format('YYYY')
         }
       }
+
       this.setState(prevState => ({
           scrollLeft: prevState.scrollLeft === scrollLeft ? scrollLeft + 0.1 : scrollLeft,
-          processWidth,
+          taskContarinerWidth,
           ...setSelectedObject
       }))
     })
   }
+  /**
+   * 获取以当天为中心的日期数组，长度为该月延伸正负length个月
+   * @param {Number} length
+   */
   getDaysOfCenter = length => {
-    if (typeof length === 'string') {
-      length = parseInt(length)
-    }
-    if (typeof length !== 'number' && length === length) {
-      throw new Error('type length is ' + typeof length + ', type of length must be Number!')
-    }
     // 以当前月为中心的年月数组
     let daysInfo = []
     let aroundCount = length
@@ -153,8 +197,9 @@ class Gantt extends Component {
     })
   }
   render () {
-    console.log('render')
-    let { daysInfo, scrollLeft, processWidth, selectedMonth, selectedYear } = this.state
+    let { tasks } = this.props
+    let { daysInfo, scrollLeft, taskContarinerWidth, selectedMonth, selectedYear, isProcessedTaskData, dateViewOffsetMap } = this.state
+    console.log(dateViewOffsetMap)
     let daysTemplate = daysInfo.map(item => {
       let className = classNames(
         'gantt__day', 
@@ -173,6 +218,7 @@ class Gantt extends Component {
         </View>
       )
     })
+
     return (
       <View>
         <Header month={selectedMonth} year={selectedYear} onReturnToday={this.returnToday} />
@@ -185,17 +231,17 @@ class Gantt extends Component {
         >
           <View 
             className='gantt__days-container'
-            style={{width: `${processWidth}px`}}
+            style={{width: `${taskContarinerWidth}px`}}
           >
             { daysTemplate }
           </View>
           {
-            processWidth && (
+            taskContarinerWidth && (
               <View 
-                className='gantt__process-container' 
-                style={{width: `${processWidth}px`}}
+                className='gantt__tasks-container' 
+                style={{width: `${taskContarinerWidth}px`}}
               >
-                123
+                <Tasks isProcessedTaskData={isProcessedTaskData} dateViewOffsetMap={dateViewOffsetMap} tasks={tasks} />
               </View>
             )
           }
@@ -212,17 +258,20 @@ Gantt.defaultProps = {
 }
 
 Gantt.propTypes = {
-  selected: PropTypes.string,
+  selected: PropTypes.string.isRequired,
   monthLength: PropTypes.number,
   tasks: PropTypes.arrayOf(PropTypes.shape({
-    name: PropTypes.string,
-    step: PropTypes.arrayOf(PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    steps: PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
       color: PropTypes.string,
+      backgroundColor: PropTypes.string.isRequired,
       styleType: PropTypes.string,
-      startDate: PropTypes.string,
-      endDate: PropTypes.string
+      startDate: PropTypes.string.isRequired,
+      endDate: PropTypes.string.isRequired,
+      text: PropTypes.string
     }))
-  }))
+  })).isRequired
 }
 
 export default Gantt
