@@ -12,6 +12,7 @@ const TODAY = moment().format('YYYY-MM-DD')
 
 class Gantt extends Component {
   constructor(props) {
+    console.log('constructor')
     super(props)
     this.todayId = `date-${TODAY}`
     this.systemInfo = null
@@ -32,6 +33,7 @@ class Gantt extends Component {
     }
   }
   componentDidMount() {
+    console.log('componentDidMount')
     if (this.env === Taro.ENV_TYPE.WEB) {
       setTimeout(() => {
         this.setViewPropertyWeapp(`${this.todayId}`)
@@ -167,6 +169,7 @@ class Gantt extends Component {
     })
   }
   render () {
+    console.log('gantt render')
     let { tasks } = this.props
     let { daysInfo, scrollLeft, taskContarinerWidth, selectedMonth, selectedYear, isProcessedTaskData, dateViewOffsetMap } = this.state
     let daysTemplate = daysInfo.map(item => {

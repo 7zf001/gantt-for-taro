@@ -4,8 +4,8 @@ import moment from 'dayjs'
 import './index.less'
 
 class Header extends Component {
-  shouldComponentUpdate(prevProps) {
-    if (prevProps.month === this.props.month && prevProps.year && this.props.year) {
+  shouldComponentUpdate(nextProps) {
+    if (nextProps.month === this.props.month && nextProps.year && this.props.year) {
       return false
     } else {
       return true

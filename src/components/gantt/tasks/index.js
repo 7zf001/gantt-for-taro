@@ -2,11 +2,20 @@ import PropTypes from 'prop-types'
 import classNames from 'classnames'
 import Taro, { Component } from '@tarojs/taro'
 import { View } from '@tarojs/components'
+
 import './index.less'
+import utils from '../utils'
 
 class Tasks extends Component {
   state = {
     selectedTaskId: null
+  }
+  shouldComponentUpdate(nextProps, nextState) {
+    if (utils.deepCompare(this.props, nextProps) && utils.deepCompare(this.state, nextState)) {
+      return false
+    } else {
+      return true
+    }
   }
   handleClickTask(item) {
     this.setState({
@@ -14,6 +23,7 @@ class Tasks extends Component {
     })
   }
   render() {
+    console.log('tasks render')
     let { selectedTaskId } = this.state
     let { tasks, dateViewOffsetMap } = this.props
     let tasksTemplate = tasks.map( item => {
