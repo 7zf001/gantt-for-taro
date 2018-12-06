@@ -11,6 +11,7 @@ class Tasks extends Component {
     selectedTaskId: null
   }
   shouldComponentUpdate(nextProps, nextState) {
+    console.log('shouldComponentUpdate')
     if (utils.deepCompare(this.props, nextProps) && utils.deepCompare(this.state, nextState)) {
       return false
     } else {
@@ -22,31 +23,57 @@ class Tasks extends Component {
       selectedTaskId: item.id
     })
   }
+  getStepOffset(taskItem) {
+    let { startDate, endDate } = taskItem
+    let { dateViewOffsetMap } = this.props
+    let startOffset = dateViewOffsetMap[`date-${startDate}`]
+    let endOffset = dateViewOffsetMap[`date-${endDate}`]
+    let offset = {
+      start: startOffset || null,
+      end: endOffset || null
+    }
+    return offset
+  }
   render() {
     console.log('tasks render')
     let { selectedTaskId } = this.state
-    let { tasks, dateViewOffsetMap } = this.props
-    let tasksTemplate = tasks.map( item => {
-      let steps = item.steps || []
+    let { tasks, taskContarinerWidth } = this.props
+
+    let tasksTemplate = tasks.map( task => {
+      let { steps = [], id: itemId, name } = task
+
       let template = steps.map( step => {
-        let { id, color, backgroundColor, startDate, endDate, text, styleType } = step
-        let offset = {
-          start: dateViewOffsetMap[`date-${startDate}`],
-          end: dateViewOffsetMap[`date-${endDate}`]
+        let { id, color, backgroundColor, text, styleType } = step
+        let offset = this.getStepOffset(step)
+        let width = 0
+        let left = 0
+        let style = {}
+        // 单个任务长度会因某个日期不存而变化
+        if (offset.start && offset.end) {
+          left = `${offset['start']['left']}px`
+          width = `${offset['end']['right'] - offset['start']['left']}px`
+        } else if (offset.start) {
+          left = `${offset['start']['left']}px`
+          width = `${taskContarinerWidth - offset['start']['left']}px`
+          styleType = 'start-circle'
+        } else if (offset.end) {
+          left = `0px`
+          width = `${offset['end']['right']}px`
+          styleType = 'end-circle'
         }
-        let width = offset['end']['right'] - offset['start']['left'] + 'px'
-        let style = {
+
+        style = {
+          left,
           width,
           color,
-          position: 'absolute',
-          background: backgroundColor,
-          left: `${offset['start']['left']}px`
+          ...style,
+          backgroundColor
         }
+
         let className = classNames(
           'gantt__task-item',
-          {
-            'gantt__task-item_circle': styleType === 'circle' // rect || circle || dotted
-          }
+          // rect || circle(end_circle, start_circle) || dotted
+          `gantt__task-item_${styleType}`
         )
         return (
           <View className={className} key={id} style={style}>
@@ -57,15 +84,33 @@ class Tasks extends Component {
       let className = classNames(
         'gantt__task-wrap',
         {
-          'gantt__task-wrap_clicked': item.id === selectedTaskId
+          'gantt__task-wrap_clicked': itemId === selectedTaskId
         }
       )
+      
+      // 获取任务第一个step获取其offset使name偏移到第一个step前
+      let firstStepOffset = this.getStepOffset(steps[0])
+      let taskNameStyle = {}
+      
+      taskNameStyle = {
+        left: firstStepOffset.start ? `${firstStepOffset.start.left}px` : 0
+      }
+
       return (
         <View
-          onClick={this.handleClickTask.bind(this, item)}
+          key={name}
           className={className}
-          key={item.name}
+          onClick={this.handleClickTask.bind(this, task)}
         >
+          { taskNameStyle && (
+            <View 
+              id={`name-${name}`}
+              style={taskNameStyle}
+              className='gantt__task-item gantt__task-name'
+            >
+              { name }
+            </View>
+          )}
           { template }
         </View>
       )
@@ -78,13 +123,16 @@ class Tasks extends Component {
 }
 
 Tasks.defaultProps = {
+  tasks: [],
+  // 所有日期的偏移量
   dateViewOffsetMap: {},
-  tasks: []
+  taskContarinerWidth: 0,
 }
 
 Tasks.propTypes = {
-  dateViewOffsetMap: PropTypes.object,
-  tasks: PropTypes.array
+  tasks: PropTypes.array.isRequired,
+  dateViewOffsetMap: PropTypes.object.isRequired,
+  taskContarinerWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
 }
 
 export default Tasks
