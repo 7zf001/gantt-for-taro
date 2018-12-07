@@ -48,6 +48,7 @@ class Tasks extends Component {
         let width = 0
         let left = 0
         let style = {}
+        let isRenderStep = true
         // 单个任务长度会因某个日期不存而变化
         if (offset.start && offset.end) {
           left = `${offset['start']['left']}px`
@@ -60,6 +61,8 @@ class Tasks extends Component {
           left = `0px`
           width = `${offset['end']['right']}px`
           styleType = 'end-circle'
+        } else {
+          isRenderStep = false
         }
 
         style = {
@@ -72,14 +75,14 @@ class Tasks extends Component {
 
         let className = classNames(
           'gantt__task-item',
-          // rect || circle(end_circle, start_circle) || dotted
+          // rect || circle, end_circle, start_circle) || dotted
           `gantt__task-item_${styleType}`
         )
-        return (
+        return isRenderStep ? (
           <View className={className} key={id} style={style}>
             { text }
           </View>
-        )
+        ) : null
       })
       let className = classNames(
         'gantt__task-wrap',
@@ -90,10 +93,12 @@ class Tasks extends Component {
       
       // 获取任务第一个step获取其offset使name偏移到第一个step前
       let firstStepOffset = this.getStepOffset(steps[0])
-      let taskNameStyle = {}
+      let taskNameStyle = null
       
-      taskNameStyle = {
-        left: firstStepOffset.start ? `${firstStepOffset.start.left}px` : 0
+      if (firstStepOffset['start']) {
+        taskNameStyle = {
+          left: `${firstStepOffset.start.left}px`
+        }
       }
 
       return (

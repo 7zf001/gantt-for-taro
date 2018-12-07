@@ -14,23 +14,26 @@ class Gantt extends Component {
   constructor(props) {
     console.log('constructor')
     super(props)
-    this.lastTimestamp = 0
     this.env = Taro.getEnv()
+this.count = 1
+    this._observer = null
+    this.lastTimestamp = 0
+    this.lastScrollTimestamp = 0
     this.todayId = `date-${TODAY}`
     this.prevMonthLength = props.prevMonthLength
     this.nextMonthLength = props.nextMonthLength
     this.systemInfo = Taro.getSystemInfoSync()
-
+    
     let daysInfo = this.getDaysOfCenter(props)
-    console.log(daysInfo)
+    
     this.state = {
       daysInfo,
       scrollX: true,
       scrollLeft: 0,
       selected: TODAY,
-      taskContarinerWidth: 0,
       // 所有日期的偏移量,减少重复获取元素次数
       dateViewOffsetMap: {},
+      taskContarinerWidth: 0,
       // 处理task数据后才渲染
       isProcessedTaskData: false,
       selectedMonth: moment().format('MM'),
@@ -48,6 +51,9 @@ class Gantt extends Component {
       this.setViewPropertyWeapp(`${this.todayId}`)
       this.setDateOffsetWeapp(this.props.tasks)
     }
+  }
+  componentWillUnmount() {
+    this._observer && this._observer.disconnect()
   }
   /**
    * weapp: 设置日期的偏移量，用于tasks渲染任务视图
@@ -74,9 +80,7 @@ class Gantt extends Component {
     allStepDate.forEach(value => {
       query.select(`#date-${value}`).boundingClientRect()
     })
-    console.log('allStepDate',allStepDate)
     query.exec(res => {
-      console.log('dddd',res)
       let { scrollLeft } = res[0]
       res.shift()
       res.forEach( item => {
@@ -89,7 +93,6 @@ class Gantt extends Component {
           dateViewOffsetMap[key] = offset
         }
       })
-      console.log('dateViewOffsetMap', dateViewOffsetMap)
       this.setState({
         dateViewOffsetMap,
         isProcessedTaskData: true
@@ -126,6 +129,7 @@ class Gantt extends Component {
         }
       }
 
+      this.handleObserver()
       this.setState(prevState => ({
           scrollX: false,
           scrollLeft: prevState.scrollLeft === scrollLeft ? scrollLeft + 0.1 : scrollLeft,
@@ -136,6 +140,25 @@ class Gantt extends Component {
           scrollX: true
         })
       })
+    })
+  }
+  handleObserver() {
+    this._observer && this._observer.disconnect()
+    this._observer = Taro.createIntersectionObserver(this.$scope, { observeAll: true})
+    let width = -(this.systemInfo.windowWidth - 2) / 2
+    let margins = {
+      left: width,
+      right: width
+    }
+    console.log('margins', margins)
+    this._observer.relativeTo('#container', margins)
+    this._observer.observe('.gantt__day', res => {
+        console.log('fullDate' + this.count++, res.dataset.id)
+        console.log('res', res)
+        this.setState({
+          selectedYear: moment(res.dataset.id).year(),
+          selectedMonth: moment(res.dataset.id).format('MM')
+        })
     })
   }
   /**
@@ -185,6 +208,10 @@ class Gantt extends Component {
       fullDate: TODAY
     })
   }
+  /**
+   * 滑动至最左或最右加载日期，重新渲染任务
+   * @param {String} type 
+   */
   loadMoreData(type) {
     switch(type) {
       case 'upper':
@@ -194,10 +221,10 @@ class Gantt extends Component {
         this.nextMonthLength += 1
         break;
     }
+    // 间隔
     let inTime = 2000
     let currentTimestamp = new Date()
     if (currentTimestamp - this.lastTimestamp >= inTime) {
-      // 如果当前选择的日期与上一个lastDaysInfo最后一个日期相隔不超过8个时，不变化选择日期
       this.lastTimestamp = currentTimestamp
       let currentSelectDate = this.state.selected
       let lastDaysInfo = this.state.daysInfo
@@ -205,6 +232,7 @@ class Gantt extends Component {
       let firstDay = lastDaysInfo[0]['fullDate']
       let willUpdateDay = type === 'upper' ? firstDay : lastDay
       let diffDay = moment(currentSelectDate).diff(moment(willUpdateDay), 'day')
+      // 如果当前选择的日期与上一个lastDaysInfo最后一个日期相隔不超过7天时，不变化选择日期
       let willSelect = Math.abs(diffDay) <= 7 ? currentSelectDate : willUpdateDay
       let daysInfo = this.getDaysOfCenter({
         prevMonthLength: this.prevMonthLength,
@@ -250,7 +278,7 @@ class Gantt extends Component {
           key={item.id}
           onClick={this.selectDay.bind(this, item)}
         >
-          <View id={item.id} className={className}>{item.day}</View>
+          <View data-id={item.fullDate} id={item.id} className={className}>{item.day}</View>
         </View>
       )
     })
@@ -266,12 +294,12 @@ class Gantt extends Component {
           lowerThreshold='50'
           scrollLeft={scrollLeft}
           className='gantt__container'
+          //onScroll={this.handleScroll}
           onScrollToLower={this.scrollToLower}
           onScrollToUpper={this.scrollToUpper}
         >
           <View 
             className='gantt__days-container'
-            style={{width: `${taskContarinerWidth}px`}}
           >
             { daysTemplate }
           </View>
