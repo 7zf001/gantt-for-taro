@@ -11,7 +11,6 @@ class Tasks extends Component {
     selectedTaskId: null
   }
   shouldComponentUpdate(nextProps, nextState) {
-    console.log('shouldComponentUpdate')
     if (utils.deepCompare(this.props, nextProps) && utils.deepCompare(this.state, nextState)) {
       return false
     } else {
@@ -35,7 +34,6 @@ class Tasks extends Component {
     return offset
   }
   render() {
-    console.log('tasks render')
     let { selectedTaskId } = this.state
     let { tasks, taskContarinerWidth } = this.props
 

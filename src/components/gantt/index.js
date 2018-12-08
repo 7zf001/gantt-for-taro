@@ -12,10 +12,8 @@ const TODAY = moment().format('YYYY-MM-DD')
 
 class Gantt extends Component {
   constructor(props) {
-    console.log('constructor')
     super(props)
     this.env = Taro.getEnv()
-this.count = 1
     this._observer = null
     this.lastTimestamp = 0
     this.lastScrollTimestamp = 0
@@ -41,16 +39,18 @@ this.count = 1
     }
   }
   componentDidMount() {
-    console.log('componentDidMount')
     if (this.env === Taro.ENV_TYPE.WEB) {
       setTimeout(() => {
-        this.setViewPropertyWeapp(`${this.todayId}`)
-        this.setDateOffsetWeapp(this.props.tasks)
+        this.init()
       })
     } else if (this.env === Taro.ENV_TYPE.WEAPP) {
-      this.setViewPropertyWeapp(`${this.todayId}`)
-      this.setDateOffsetWeapp(this.props.tasks)
+      this.init()
     }
+  }
+  init() {
+    this.setViewPropertyWeapp(`${this.todayId}`)
+    this.setDateOffsetWeapp(this.props.tasks)
+    this.handleObserver()
   }
   componentWillUnmount() {
     this._observer && this._observer.disconnect()
@@ -129,7 +129,6 @@ this.count = 1
         }
       }
 
-      this.handleObserver()
       this.setState(prevState => ({
           scrollX: false,
           scrollLeft: prevState.scrollLeft === scrollLeft ? scrollLeft + 0.1 : scrollLeft,
@@ -142,19 +141,39 @@ this.count = 1
       })
     })
   }
+  setTaskViewWidth() {
+    const query = Taro.createSelectorQuery().in(this.$scope)
+    let { daysInfo } = this.state
+    let lastId = daysInfo[daysInfo.length - 1]['id']
+    query.select(`#${lastId}`).boundingClientRect()
+    query.select('#container').scrollOffset()
+    query.exec(res => {
+      let lastRect = res[0]
+      let scrollView = res[1]
+      let taskContarinerWidth = lastRect.right + scrollView.scrollLeft
+      this.setState({
+        scrollX: false,
+        taskContarinerWidth
+      }, () => {
+        this.setState({
+          scrollX: true
+        })
+      })
+    })
+  }
+  /**
+   * 左右滑动修改年月
+   */
   handleObserver() {
     this._observer && this._observer.disconnect()
-    this._observer = Taro.createIntersectionObserver(this.$scope, { observeAll: true})
+    this._observer = Taro.createIntersectionObserver(this.$scope, { observeAll: true })
     let width = -(this.systemInfo.windowWidth - 2) / 2
     let margins = {
       left: width,
       right: width
     }
-    console.log('margins', margins)
     this._observer.relativeTo('#container', margins)
     this._observer.observe('.gantt__day', res => {
-        console.log('fullDate' + this.count++, res.dataset.id)
-        console.log('res', res)
         this.setState({
           selectedYear: moment(res.dataset.id).year(),
           selectedMonth: moment(res.dataset.id).format('MM')
@@ -213,27 +232,19 @@ this.count = 1
    * @param {String} type 
    */
   loadMoreData(type) {
-    switch(type) {
-      case 'upper':
-        this.prevMonthLength += 1
-        break;
-      case 'lower':
-        this.nextMonthLength += 1
-        break;
-    }
     // 间隔
     let inTime = 2000
     let currentTimestamp = new Date()
     if (currentTimestamp - this.lastTimestamp >= inTime) {
+      switch(type) {
+        case 'upper':
+          this.prevMonthLength += 1
+          break;
+        case 'lower':
+          this.nextMonthLength += 1
+          break;
+      }
       this.lastTimestamp = currentTimestamp
-      let currentSelectDate = this.state.selected
-      let lastDaysInfo = this.state.daysInfo
-      let lastDay = lastDaysInfo[lastDaysInfo.length - 1]['fullDate']
-      let firstDay = lastDaysInfo[0]['fullDate']
-      let willUpdateDay = type === 'upper' ? firstDay : lastDay
-      let diffDay = moment(currentSelectDate).diff(moment(willUpdateDay), 'day')
-      // 如果当前选择的日期与上一个lastDaysInfo最后一个日期相隔不超过7天时，不变化选择日期
-      let willSelect = Math.abs(diffDay) <= 7 ? currentSelectDate : willUpdateDay
       let daysInfo = this.getDaysOfCenter({
         prevMonthLength: this.prevMonthLength,
         nextMonthLength: this.nextMonthLength
@@ -245,12 +256,14 @@ this.count = 1
         // 重新渲染任务
         if (this.env === Taro.ENV_TYPE.WEB) {
           setTimeout(() => {
-            this.setViewPropertyWeapp(`date-${willSelect}`)
+            this.setTaskViewWidth()
             this.setDateOffsetWeapp(this.props.tasks)
+            this.handleObserver()
           })
         } else if (this.env === Taro.ENV_TYPE.WEAPP) {
-          this.setViewPropertyWeapp(`date-${willSelect}`)
+          this.setTaskViewWidth()
           this.setDateOffsetWeapp(this.props.tasks)
+          this.handleObserver()
         }
       })
     }
@@ -262,7 +275,6 @@ this.count = 1
     this.loadMoreData('lower')
   }
   render () {
-    console.log('gantt render')
     let { tasks } = this.props
     let { scrollX, daysInfo, scrollLeft, taskContarinerWidth, selectedMonth, selectedYear, isProcessedTaskData, dateViewOffsetMap } = this.state
     let daysTemplate = daysInfo.map(item => {
@@ -290,11 +302,11 @@ this.count = 1
           id='container'
           scrollX={scrollX}
           scrollWithAnimation
-          upperThreshold='50'
-          lowerThreshold='50'
+          upperThreshold='-10'
+          lowerThreshold='-10'
           scrollLeft={scrollLeft}
           className='gantt__container'
-          //onScroll={this.handleScroll}
+          onScroll={this.handleScroll}
           onScrollToLower={this.scrollToLower}
           onScrollToUpper={this.scrollToUpper}
         >
