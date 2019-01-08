@@ -253,17 +253,22 @@ class Gantt extends Component {
         isProcessedTaskData: true,
         daysInfo
       }, () => {
+        Taro.showLoading({
+          title: '加载中...'
+        })
         // 重新渲染任务
         if (this.env === Taro.ENV_TYPE.WEB) {
           setTimeout(() => {
             this.setTaskViewWidth()
             this.setDateOffsetWeapp(this.props.tasks)
             this.handleObserver()
+            Taro.hideLoading()
           })
         } else if (this.env === Taro.ENV_TYPE.WEAPP) {
           this.setTaskViewWidth()
           this.setDateOffsetWeapp(this.props.tasks)
           this.handleObserver()
+          Taro.hideLoading()
         }
       })
     }
