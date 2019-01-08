@@ -302,11 +302,10 @@ class Gantt extends Component {
           id='container'
           scrollX={scrollX}
           scrollWithAnimation
-          upperThreshold='-10'
-          lowerThreshold='-10'
+          upperThreshold='0'
+          lowerThreshold='0'
           scrollLeft={scrollLeft}
           className='gantt__container'
-          onScroll={this.handleScroll}
           onScrollToLower={this.scrollToLower}
           onScrollToUpper={this.scrollToUpper}
         >

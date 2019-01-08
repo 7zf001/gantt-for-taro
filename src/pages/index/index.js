@@ -174,7 +174,6 @@ export default class Index extends Component {
     return (
       <View className='index'>
         <Gantt prevMonthLength={1} nextMonthLength={1} tasks={this.state.tasks} />
-        <View style={{background: 'blue', height: '900px'}}></View>
       </View>
     )
   }
