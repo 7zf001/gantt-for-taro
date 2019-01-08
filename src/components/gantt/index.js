@@ -355,6 +355,7 @@ Gantt.propTypes = {
   nextMonthLength: PropTypes.number.isRequired,
   height: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   tasks: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
     name: PropTypes.string.isRequired,
     steps: PropTypes.arrayOf(PropTypes.shape({
       text: PropTypes.string,
