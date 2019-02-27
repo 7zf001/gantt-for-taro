@@ -47,8 +47,8 @@ export default class Index extends Component {
             color: 'white',
             backgroundColor: 'red',
             styleType: 'circle', // rect || circle || dotted
-            startDate: '2018-12-05',
-            endDate: '2018-12-09',
+            startDate: '2019-1-05',
+            endDate: '2019-1-09',
           }
         ]
       },
@@ -77,8 +77,8 @@ export default class Index extends Component {
             color: 'white',
             backgroundColor: 'blue',
             styleType: 'circle', // rect || circle || dotted
-            startDate: '2018-12-09',
-            endDate: '2018-12-12',
+            startDate: '2019-2-09',
+            endDate: '2019-3-12',
           }
         ]
       },
@@ -92,8 +92,8 @@ export default class Index extends Component {
             color: 'white',
             backgroundColor: 'blue',
             styleType: 'circle', // rect || circle || dotted
-            startDate: '2018-12-09',
-            endDate: '2018-12-12',
+            startDate: '2019-2-09',
+            endDate: '2019-4-12',
           }
         ]
       },
@@ -107,8 +107,8 @@ export default class Index extends Component {
             color: 'white',
             backgroundColor: 'blue',
             styleType: 'circle', // rect || circle || dotted
-            startDate: '2018-12-09',
-            endDate: '2018-12-12',
+            startDate: '2019-2-24',
+            endDate: '2019-3-27',
           }
         ]
       },
@@ -122,8 +122,8 @@ export default class Index extends Component {
             color: 'white',
             backgroundColor: 'blue',
             styleType: 'circle', // rect || circle || dotted
-            startDate: '2018-10-11',
-            endDate: '2018-11-02',
+            startDate: '2019-02-11',
+            endDate: '2019-03-02',
           }
         ]
       },

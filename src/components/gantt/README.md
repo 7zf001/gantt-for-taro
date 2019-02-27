@@ -30,3 +30,9 @@
 |text|文字|String|否||
 |color|文字|String|否||
 |styleType|任务框样式|String|否|默认：circle|
+
+# 效果
+
+![效果1](./gantt_image_01.gif)
+![效果2](./gantt_image_02.gif)
+![效果3](./gantt_image_03.gif)
