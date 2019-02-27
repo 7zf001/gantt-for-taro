@@ -1,6 +1,6 @@
 # SOP 任务流程组件
 
-最低版本: 2.0.0
+微信基础最低版本: 2.0.0
 
 # 组件参数
 
@@ -30,3 +30,9 @@
 |text|文字|String|否||
 |color|文字|String|否||
 |styleType|任务框样式|String|否|默认：circle|
+
+# 效果
+
+![效果1](./src/components/gantt/gantt_image_01.gif)
+![效果2](./src/components/gantt/gantt_image_02.gif)
+![效果3](./src/components/gantt/gantt_image_03.gif)
