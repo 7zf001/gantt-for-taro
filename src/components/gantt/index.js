@@ -210,12 +210,20 @@ class Gantt extends Component {
    * @param {Object} item : {id<String>: 'date-2018-11-20', fullDate<String>: '2018-11-20'}
    */
   selectDay(item) {
+    console.log(item)
+    // 当存在target时表示按日期，否则点击返回今天
+    let id = null
+    if (item.target) {
+      id = `date-${item.target.dataset.id}`
+    } else {
+      id = item.id
+    }
     if (this.env === Taro.ENV_TYPE.WEB) {
       setTimeout(() => {
-        this.setViewPropertyWeapp(`${item.id}`)
+        this.setViewPropertyWeapp(`${id}`)
       })
     } else if (this.env === Taro.ENV_TYPE.WEAPP) {
-      this.setViewPropertyWeapp(`${item.id}`)
+      this.setViewPropertyWeapp(`${id}`)
     }
   }
   /**
@@ -293,7 +301,7 @@ class Gantt extends Component {
         <View 
           className='gantt__day-wrap'
           key={item.id}
-          onClick={this.selectDay.bind(this, item)}
+          onClick={this.selectDay}
         >
           <View data-id={item.fullDate} id={item.id} className={className}>{item.day}</View>
         </View>
